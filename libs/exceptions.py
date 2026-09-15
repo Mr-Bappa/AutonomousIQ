@@ -34,6 +34,14 @@ class AccessDeniedError(AutonomousIQError):
     code = "ACCESS_DENIED"
 
 
+class AuthenticationError(AutonomousIQError):
+    """Raised for bad credentials, an expired/invalid JWT, or a failed
+    OAuth exchange. Distinct from AccessDeniedError: this means "we don't
+    know who you are", not "we know who you are and you can't do this"."""
+
+    code = "AUTHENTICATION_FAILED"
+
+
 class ApprovalRequiredError(AutonomousIQError):
     """Raised when an action requires human approval before it can proceed
     (e.g. sql_query_tool, tracker_query_tool, chart_tool per the PRD's
@@ -64,3 +72,13 @@ class RecalcEngineError(AutonomousIQError):
     circular references or invalid formula syntax."""
 
     code = "RECALC_ERROR"
+
+
+class NotFoundError(AutonomousIQError):
+    """Raised when a requested resource doesn't exist within the
+    caller's tenant. Deliberately distinct from AccessDeniedError: this
+    is "genuinely doesn't exist from where you're standing" (including
+    tenant-scoped lookups that miss because the resource belongs to
+    another tenant), not "exists but you're not allowed to see it"."""
+
+    code = "NOT_FOUND"

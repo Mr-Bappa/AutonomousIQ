@@ -4,7 +4,7 @@ ingestion + profiling sources feeding Datasets and Documents)."""
 import enum
 import uuid
 
-from sqlalchemy import Boolean, Enum, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from libs.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -64,3 +64,9 @@ class Document(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
     storage_pointer: Mapped[str] = mapped_column(String(1024), nullable=False)
     format: Mapped[str] = mapped_column(String(32), nullable=False)
+    name: Mapped[str] = mapped_column(String(255), nullable=False, default="untitled")
+    # Session F+ addition: plain extracted text, used by the Phase 0 demo
+    # RAG implementation (apps/planner/rag.py) for naive keyword search.
+    # A real pipeline would chunk + embed this into a vector store: out
+    # of scope per this session's "keep it simple, demo-level" brief.
+    content_text: Mapped[str | None] = mapped_column(Text, nullable=True)

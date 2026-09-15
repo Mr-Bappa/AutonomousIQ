@@ -1,8 +1,13 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "autonomousiq"
 version = "0.1.0"
 description = "AI Analyst Layer for Data-Services Agencies — Phase 0"
 requires-python = ">=3.11"
+
 dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
@@ -11,6 +16,12 @@ dependencies = [
     "pydantic>=2.7",
     "asyncpg>=0.29",
     "structlog>=24.1",
+    "authlib>=1.3",
+    "python-jose[cryptography]>=3.3",
+    "passlib[bcrypt]>=1.7",
+    "httpx>=0.27",
+    "itsdangerous>=2.2",
+    "email-validator>=2.2",
 ]
 
 [project.optional-dependencies]
@@ -20,6 +31,26 @@ dev = [
     "pytest>=8.3",
     "pytest-asyncio>=0.24",
 ]
+# GCP integration (Documents storage, Secret Manager, Vertex AI planner
+# provider). Not required for LLM_PROVIDER=naive or local-disk Document
+# storage -- only install this group when GCP_PROJECT_ID is actually set.
+gcp = [
+    "google-cloud-storage>=2.18",
+    "google-cloud-secret-manager>=2.20",
+    "google-cloud-aiplatform>=1.60",
+]
+# Live-DB connectors (D-3/D-13/D-14). Each is independent -- install
+# only the ones your tenant's connector configs actually use.
+connectors = [
+    "aiomysql>=0.2",
+    "pyodbc>=5.1",
+    "snowflake-connector-python>=3.12",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["apps*", "libs*"]
+exclude = ["migrations*", "tests*"]
 
 [tool.ruff]
 line-length = 100

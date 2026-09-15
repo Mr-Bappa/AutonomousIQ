@@ -1,0 +1,60 @@
+/*
+  Rebrand (this session): white + light green, per explicit direction.
+  Still a data/ledger product, not a marketing surface once inside the
+  app -- so the palette stays clean and light rather than going
+  full-saturated "startup green". Green is reserved for actions/accents
+  and positive states; everything structural stays white/neutral gray
+  so tabular data (Trackers, tickets, approval queues) stays readable.
+*/
+
+:root {
+  --color-surface: #ffffff;
+  --color-surface-raised: #f4faf6;
+  --color-border: #d9e6de;
+  --color-text: #16241c;
+  --color-text-muted: #5b6b62;
+  --color-accent: #5cb87a;
+  --color-accent-strong: #3f9c5f;
+  --color-accent-soft: #e3f5e9;
+  --color-positive: #3f9c5f;
+  --color-negative: #c1503f;
+
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+code,
+.data-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+}

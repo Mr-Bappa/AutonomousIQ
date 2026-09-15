@@ -1,0 +1,16 @@
+{
+  "name": "formula-sidecar",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Stateless Formula.js function evaluator sidecar for the Tracker recalc engine (D-1, Architecture Decision Log). Never sees cell coordinates or formula text -- only a function name and already-resolved literal arguments.",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "@formulajs/formulajs": "^4.4.4",
+    "express": "^4.19.2"
+  }
+}

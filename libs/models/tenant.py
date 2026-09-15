@@ -67,9 +67,14 @@ class User(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     role: Mapped[TenantRole] = mapped_column(
         Enum(TenantRole, name="tenant_role"), nullable=False
     )
+    # Nullable: OAuth-only users (Google/Facebook/LinkedIn) have no
+    # password. A user can have a password AND linked OAuth identities
+    # simultaneously (e.g. register with password, later link Google).
+    password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     tenant: Mapped["Tenant"] = relationship(back_populates="users")
     team_memberships: Mapped[list["TeamMembership"]] = relationship(back_populates="user")
+    oauth_identities: Mapped[list["OAuthIdentity"]] = relationship(back_populates="user")
 
     __table_args__ = ({"comment": "email is unique per tenant, not globally -- enforced via a"
                         " composite unique index in the migration, not here."},)
@@ -92,3 +97,37 @@ class TeamMembership(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 
     user: Mapped["User"] = relationship(back_populates="team_memberships")
     team: Mapped["Team"] = relationship(back_populates="memberships")
+
+
+class OAuthProvider(str, enum.Enum):
+    google = "google"
+    facebook = "facebook"
+    linkedin = "linkedin"
+
+
+class OAuthIdentity(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    """Links a User to an external OAuth provider account. A single User
+    can have multiple linked identities (e.g. password + Google +
+    LinkedIn all pointing at the same User row)."""
+
+    __tablename__ = "oauth_identities"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    provider: Mapped[OAuthProvider] = mapped_column(
+        Enum(OAuthProvider, name="oauth_provider"), nullable=False
+    )
+    provider_user_id: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    user: Mapped["User"] = relationship(back_populates="oauth_identities")
+
+    __table_args__ = (
+        {
+            "comment": (
+                "Unique on (provider, provider_user_id) enforced in the "
+                "migration -- the same external account can't link to two "
+                "different Users."
+            )
+        },
+    )

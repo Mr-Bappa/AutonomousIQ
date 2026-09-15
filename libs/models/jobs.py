@@ -4,7 +4,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, String
+from sqlalchemy import DateTime, Enum, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -72,6 +72,11 @@ class Ticket(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     created_by: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
+    # Session F+ addition: the model as locked at the Data stage had no
+    # human-facing text fields at all -- title/description are the
+    # minimum needed for a usable Ticket CRUD surface.
+    title: Mapped[str] = mapped_column(String(255), nullable=False, default="Untitled ticket")
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class TenantRequestStatus(str, enum.Enum):

@@ -25,6 +25,7 @@ from typing import Protocol
 from libs.recalc_engine import js_bridge
 from libs.recalc_engine.dependency_graph import CellCoord, DependencyGraph
 from libs.recalc_engine.formula_parser import parse_dependencies
+from libs.recalc_engine.formula_resolver import FormulaSyntaxError, evaluate_formula
 
 
 class CellRepository(Protocol):
@@ -103,29 +104,18 @@ async def recalculate(
             # raw_value and error_state stays "none".
             continue
         try:
-            # NOTE: translating a parsed formula AST into a single
-            # (function_name, args) call is the remaining piece of
-            # engineering scope Formula.js doesn't supply (per D-1's
-            # "what this commits us to building"). Phase 0 handles the
-            # common single-function-call shape (`=SUM(...)`,
-            # `=IF(...)`); nested/compound expressions are a known
-            # follow-up, not solved by this stub.
-            function_name, args = _resolve_call(row, rows_by_coord)
-            result = await js_bridge.evaluate(function_name, args)
+            # Layer-wise Development: the Data-stage stub is now real.
+            # formula_resolver parses the formula into an AST and walks
+            # it bottom-up, dispatching every function call (and every
+            # arithmetic operator, translated to its Formula.js
+            # equivalent) to the sidecar -- so nested calls like
+            # `=SUM(A1:A5, MAX(B1:B5))` work, not just a single top-level
+            # call.
+            result = await evaluate_formula(formula, rows_by_coord)
             await repo.save_cell(
                 tracker_id, coord, computed_value=str(result), error_state="none"
             )
-        except js_bridge.FormulaEvaluationError:
+        except (js_bridge.FormulaEvaluationError, FormulaSyntaxError):
             await repo.save_cell(
                 tracker_id, coord, computed_value=None, error_state="invalid_formula"
             )
-
-
-def _resolve_call(row: dict, rows_by_coord: dict[CellCoord, dict]) -> tuple[str, list]:
-    """Placeholder formula-to-call resolver. Real implementation belongs
-    to whoever builds out the full Formula.js function surface in the
-    Layer-wise Development stage -- flagged here, not silently deferred."""
-    raise NotImplementedError(
-        "Formula AST -> (function_name, args) resolution is out of scope "
-        "for the Data stage; tracked for Layer-wise Development."
-    )

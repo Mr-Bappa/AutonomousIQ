@@ -18,6 +18,7 @@ import { ProductPage } from "@/features/marketing/ProductPage";
 import { PricingPage } from "@/features/marketing/PricingPage";
 import { AboutPage } from "@/features/marketing/AboutPage";
 import { RequestAccessPage } from "@/features/marketing/RequestAccessPage";
+import { PlatformAdminPage } from "@/features/platform/PlatformAdminPage";
 
 /**
  * Two shells: MarketingLayout (public, unauthenticated -- Home/Product/
@@ -30,6 +31,13 @@ import { RequestAccessPage } from "@/features/marketing/RequestAccessPage";
  * like TeamPage's tenant-requests panel) are enforced by the API and
  * simply hidden/errored in the UI when a call 403s, not gated here.
  */
+function RequirePlatformAdmin({ children }: { children: ReactNode }) {
+  const { isAuthenticated, isPlatformAdmin } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isPlatformAdmin) return <Navigate to="/app/workspaces" replace />;
+  return <>{children}</>;
+}
+
 function RequireAuth({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
@@ -40,6 +48,7 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/platform" element={<RequirePlatformAdmin><PlatformAdminPage /></RequirePlatformAdmin>} />
 
       <Route path="/" element={<MarketingLayout />}>
         <Route index element={<HomePage />} />

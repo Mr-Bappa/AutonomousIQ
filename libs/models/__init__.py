@@ -12,6 +12,7 @@ from libs.models.access_control import (
     ResourceWorkspaceAccess,
 )
 from libs.models.base import Base
+from libs.models.platform import PlatformUser
 from libs.models.chat_and_connectors import (
     ChatMessage,
     ChatRole,
@@ -46,6 +47,7 @@ from libs.models.workspace import (
 
 __all__ = [
     "Base",
+    "PlatformUser",
     "Tenant",
     "TenantRole",
     "Team",

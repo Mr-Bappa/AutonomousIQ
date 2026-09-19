@@ -16,12 +16,12 @@ from pydantic import BaseModel, EmailStr
 from sqlalchemy import select
 from starlette.responses import RedirectResponse
 
-from libs.auth.jwt import create_access_token
+from libs.auth.jwt import create_access_token, create_platform_access_token
 from libs.auth.oauth import is_provider_configured, oauth
 from libs.auth.passwords import hash_password, verify_password
 from libs.db import async_session_factory
 from libs.exceptions import AuthenticationError
-from libs.models import OAuthIdentity, Tenant, TenantRole, User
+from libs.models import OAuthIdentity, PlatformUser, Tenant, TenantRole, User
 
 router = APIRouter(prefix="/v1/auth", tags=["auth"])
 
@@ -77,6 +77,13 @@ async def register(body: RegisterRequest) -> TokenResponse:
 @router.post("/login", response_model=TokenResponse)
 async def login(body: LoginRequest) -> TokenResponse:
     async with async_session_factory() as session:
+        platform_user = await session.scalar(select(PlatformUser).where(PlatformUser.email == body.email))
+        if platform_user is not None:
+            if not platform_user.active or not verify_password(body.password, platform_user.password_hash):
+                raise AuthenticationError("Invalid email or password.")
+            token = create_platform_access_token(user_id=platform_user.id)
+            return TokenResponse(access_token=token)
+
         user = await session.scalar(select(User).where(User.email == body.email))
         if user is None or user.password_hash is None:
             raise AuthenticationError("Invalid email or password.")

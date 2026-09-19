@@ -23,8 +23,8 @@ export function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
-      await login(email, password);
-      navigate("/app/workspaces");
+      const platformAdmin = await login(email, password);
+      navigate(platformAdmin ? "/platform" : "/app/workspaces");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Login failed.");
     } finally {

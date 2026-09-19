@@ -70,7 +70,7 @@ class Ticket(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
     category: Mapped[str] = mapped_column(String(64), nullable=False)
     created_by: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+        ForeignKey("platform_users.id", ondelete="SET NULL"), nullable=True
     )
     # Session F+ addition: the model as locked at the Data stage had no
     # human-facing text fields at all -- title/description are the
@@ -99,7 +99,7 @@ class TenantRequest(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         default=TenantRequestStatus.pending,
     )
     reviewed_by: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+        ForeignKey("platform_users.id", ondelete="SET NULL"), nullable=True
     )
     # Explicit field (distinct from updated_at) since PRD calls it out by
     # name and it has specific meaning: "when was this reviewed", not

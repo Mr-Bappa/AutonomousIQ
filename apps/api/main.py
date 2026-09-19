@@ -21,6 +21,7 @@ from apps.api import (
     chat,
     documents,
     ingestion,
+    platform,
     tenant_requests,
     teams,
     tickets,
@@ -29,6 +30,10 @@ from apps.api import (
     workspaces,
 )
 from libs.auth.oauth import register_configured_providers
+from libs.auth.passwords import hash_password
+from libs.db import async_session_factory
+from libs.models import PlatformUser
+from sqlalchemy import select
 from libs.exceptions import AutonomousIQError
 
 logger = logging.getLogger("autonomousiq.api")
@@ -62,6 +67,7 @@ app.add_middleware(
 app.add_middleware(SessionMiddleware, secret_key=os.environ["SESSION_SECRET"])
 
 app.include_router(auth.router)
+app.include_router(platform.router)
 app.include_router(workspaces.router)
 app.include_router(trackers.router)
 app.include_router(approvals.router)
@@ -77,6 +83,15 @@ app.include_router(ingestion.router)
 @app.on_event("startup")
 async def on_startup() -> None:
     register_configured_providers()
+    email = os.environ.get("PLATFORM_ADMIN_EMAIL", "").strip().lower()
+    password = os.environ.get("PLATFORM_ADMIN_PASSWORD", "")
+    if email and password:
+        async with async_session_factory() as session:
+            existing = await session.scalar(select(PlatformUser).where(PlatformUser.email == email))
+            if existing is None:
+                session.add(PlatformUser(email=email, password_hash=hash_password(password), is_super_admin=True, active=True))
+                await session.commit()
+                logger.info("platform_super_admin_bootstrapped", extra={"email": email})
 
 
 @app.exception_handler(AutonomousIQError)

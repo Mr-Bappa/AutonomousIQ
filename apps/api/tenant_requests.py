@@ -22,7 +22,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from apps.api.deps import CurrentUser, CurrentUserDep
+from apps.api.deps import CurrentUser, PlatformAdminDep
 from libs.auth.passwords import hash_password
 from libs.db import get_db_session
 from libs.exceptions import AccessDeniedError, NotFoundError
@@ -66,7 +66,7 @@ async def submit_request(
 
 @router.get("", response_model=list[TenantRequestResponse])
 async def list_requests(
-    current_user: CurrentUser = CurrentUserDep,
+    current_user: CurrentUser = PlatformAdminDep,
     session: AsyncSession = Depends(get_db_session),
 ) -> list[TenantRequest]:
     """Admin-only. Tenant requests have no tenant_id (they precede
@@ -74,7 +74,6 @@ async def list_requests(
     *any* tenant" rather than tenant-scoped -- matching that these are
     reviewed by internal AutonomousIQ operators, not by the requester's
     own (not-yet-existing) tenant."""
-    await _require_admin(session, current_user.user_id)
     result = await session.scalars(select(TenantRequest).order_by(TenantRequest.created_at))
     return list(result)
 
@@ -82,10 +81,9 @@ async def list_requests(
 @router.post("/{request_id}/approve", response_model=ApprovalResponse)
 async def approve_request(
     request_id: uuid.UUID,
-    current_user: CurrentUser = CurrentUserDep,
+    current_user: CurrentUser = PlatformAdminDep,
     session: AsyncSession = Depends(get_db_session),
 ) -> ApprovalResponse:
-    await _require_admin(session, current_user.user_id)
     request = await session.get(TenantRequest, request_id)
     if request is None:
         raise NotFoundError(f"No tenant request {request_id}.")
@@ -122,10 +120,9 @@ async def approve_request(
 @router.post("/{request_id}/reject", response_model=TenantRequestResponse)
 async def reject_request(
     request_id: uuid.UUID,
-    current_user: CurrentUser = CurrentUserDep,
+    current_user: CurrentUser = PlatformAdminDep,
     session: AsyncSession = Depends(get_db_session),
 ) -> TenantRequest:
-    await _require_admin(session, current_user.user_id)
     request = await session.get(TenantRequest, request_id)
     if request is None:
         raise NotFoundError(f"No tenant request {request_id}.")
@@ -137,7 +134,3 @@ async def reject_request(
     return request
 
 
-async def _require_admin(session: AsyncSession, user_id: uuid.UUID) -> None:
-    user = await session.get(User, user_id)
-    if user is None or user.role != TenantRole.admin:
-        raise AccessDeniedError("Only a tenant Admin can review tenant access requests.")
